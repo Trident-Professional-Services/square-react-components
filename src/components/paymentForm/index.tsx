@@ -1,62 +1,38 @@
 import React, { useEffect, useState } from "react";
 import "./paymentForm.css";
+import { ICallbackMethods } from "./ICallbackMethods";
+import { IInputEvent } from "./IInputEvent";
+import { paymentFormStyles } from "./paymentFormStyles";
+import { ISquareLineItem } from "./ISquareLineItem";
 
 declare class SqPaymentForm {
-  constructor(config:any);
+  constructor(config: any);
   build(): void;
   destroy(): void;
   requestCardNonce(): void;
 }
 
-interface ICallbackMethods {
-  googlePay: boolean;
-  applePay: boolean;
-  masterpass: boolean;
-}
-
-interface IInputEvent {
-  cardBrand: string;
-  eventType: string;
-}
-
-const styles = {
-  name: {
-    verticalAlign: "top",
-    display: "none",
-    margin: 0,
-    border: "none",
-    fontSize: "16px",
-    fontFamily: "Helvetica Neue",
-    padding: "16px",
-    color: "#373F4A",
-    backgroundColor: "transparent",
-    lineHeight: "1.15em",
-    placeholderColor: "#000",
-    _webkitFontSmoothing: "antialiased",
-    _mozOsxFontSmoothing: "grayscale"
-  },
-  leftCenter: {
-    float: "left",
-    textAlign: "center"
-  },
-  blockRight: {
-    display: "block",
-    float: "right"
-  },
-  center: {
-    textAlign: "center"
-  }
-};
-
 export interface IPaymentFormProps {
   application_id: string;
   countryCode: string;
   currencyCode: string;
+  label: string;
+  lineItems: ISquareLineItem[];
   location_id: string;
+  pending: boolean;
   submitCheckout: (nonce: string) => void;
 }
 export const PaymentForm = (props: IPaymentFormProps) => {
-  const { application_id, countryCode, currencyCode, location_id, submitCheckout } = props;
+  const {
+    application_id,
+    countryCode,
+    currencyCode,
+    label,
+    lineItems,
+    location_id,
+    pending,
+    submitCheckout
+  } = props;
   const [applePay, setApplePay] = useState(false);
   const [masterpass, setMasterpass] = useState(false);
   const [googlePay, setGooglePay] = useState(false);
@@ -128,17 +104,22 @@ export const PaymentForm = (props: IPaymentFormProps) => {
             currencyCode: currencyCode,
             countryCode: countryCode,
             total: {
-              label: "Indo Expo Test",
-              amount: "100",
-              pending: false
+              label: label,
+              amount: lineItems
+                        .map((lineItem: ISquareLineItem)=>lineItem.amount)
+                        .reduce(
+                          (previousValue:number, currentValue:number)=>previousValue+currentValue
+                          ),
+              pending: pending
             },
-            lineItems: [
-              {
-                label: "Subtotal",
-                amount: "100",
-                pending: false
-              }
-            ]
+            lineItems: lineItems.map((lineItem: ISquareLineItem) => {
+              const { amount, label, pending } = lineItem;
+              return {
+                amount: amount.toString(),
+                label: label,
+                pending: pending
+              };
+            })
           };
         },
         cardNonceResponseReceived: (errors: Error[], nonce: any) => {
@@ -207,12 +188,12 @@ export const PaymentForm = (props: IPaymentFormProps) => {
     }
   };
   useEffect(() => {
-    let sqPaymentScript = document.createElement('script');
-    sqPaymentScript.src = 'https://js.squareup.com/v2/paymentform';
-    sqPaymentScript.type = 'text/javascript';
+    let sqPaymentScript = document.createElement("script");
+    sqPaymentScript.src = "https://js.squareup.com/v2/paymentform";
+    sqPaymentScript.type = "text/javascript";
     sqPaymentScript.async = false;
     sqPaymentScript.onload = () => initialize();
-    document.getElementsByTagName('head')[0].appendChild(sqPaymentScript);
+    document.getElementsByTagName("head")[0].appendChild(sqPaymentScript);
   }, []);
 
   return (
@@ -239,10 +220,10 @@ export const PaymentForm = (props: IPaymentFormProps) => {
 
         <div id="sq-ccbox">
           <p>
-            <span style={styles.leftCenter as React.CSSProperties}>
+            <span style={paymentFormStyles.leftCenter as React.CSSProperties}>
               Enter Card Info Below{" "}
             </span>
-            <span style={styles.blockRight as React.CSSProperties}>
+            <span style={paymentFormStyles.blockRight as React.CSSProperties}>
               {cardBrand.toUpperCase()}
             </span>
           </p>
@@ -254,7 +235,7 @@ export const PaymentForm = (props: IPaymentFormProps) => {
           </div>
           <input
             id="name"
-            style={styles.name as React.CSSProperties}
+            style={paymentFormStyles.name as React.CSSProperties}
             type="text"
             placeholder="Name"
           />
@@ -264,7 +245,7 @@ export const PaymentForm = (props: IPaymentFormProps) => {
           Pay
         </button>
       </div>
-      <p style={styles.center as React.CSSProperties} id="error"></p>
+      <p style={paymentFormStyles.center as React.CSSProperties} id="error"></p>
     </div>
   );
 };
