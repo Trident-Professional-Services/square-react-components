@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./paymentForm.css";
 
 declare class SqPaymentForm {
-  constructor(any);
+  constructor(config:any);
   build(): void;
   destroy(): void;
   requestCardNonce(): void;
@@ -50,16 +50,18 @@ const styles = {
 
 export interface IPaymentFormProps {
   application_id: string;
+  countryCode: string;
+  currencyCode: string;
   location_id: string;
   submitCheckout: (nonce: string) => void;
 }
 export const PaymentForm = (props: IPaymentFormProps) => {
-  const { application_id, location_id, submitCheckout } = props;
+  const { application_id, countryCode, currencyCode, location_id, submitCheckout } = props;
   const [applePay, setApplePay] = useState(false);
   const [masterpass, setMasterpass] = useState(false);
   const [googlePay, setGooglePay] = useState(false);
   const [cardBrand, setCardBrand] = useState("");
-  const [nonce, setNonce] = useState();
+  //const [nonce, setNonce] = useState();
   const [paymentForm, setPaymentForm] = useState<SqPaymentForm>();
 
   const initialize = () => {
@@ -123,8 +125,8 @@ export const PaymentForm = (props: IPaymentFormProps) => {
           return {
             requestShippingAddress: false,
             requestBillingInfo: true,
-            currencyCode: "USD",
-            countryCode: "US",
+            currencyCode: currencyCode,
+            countryCode: countryCode,
             total: {
               label: "Indo Expo Test",
               amount: "100",
@@ -149,7 +151,7 @@ export const PaymentForm = (props: IPaymentFormProps) => {
 
             return;
           }
-          setNonce(nonce);
+          //setNonce(nonce);
           submitCheckout(nonce);
         },
         unsupportedBrowserDetected: () => {},
@@ -205,7 +207,12 @@ export const PaymentForm = (props: IPaymentFormProps) => {
     }
   };
   useEffect(() => {
-    initialize();
+    let sqPaymentScript = document.createElement('script');
+    sqPaymentScript.src = 'https://js.squareup.com/v2/paymentform';
+    sqPaymentScript.type = 'text/javascript';
+    sqPaymentScript.async = false;
+    sqPaymentScript.onload = () => initialize();
+    document.getElementsByTagName('head')[0].appendChild(sqPaymentScript);
   }, []);
 
   return (
